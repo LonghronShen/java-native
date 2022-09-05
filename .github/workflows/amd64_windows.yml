@@ -22,3 +22,9 @@ jobs:
       run: cmake --build build --config Release --target RUN_TESTS -v -- /verbosity:normal /maxcpucount
     - name: Install
       run: cmake --build build --config Release --target INSTALL -v -- /verbosity:normal /maxcpucount
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: bin
+        path: |
+          build
