@@ -17,15 +17,14 @@ find_package(JNI REQUIRED)
 
 # Find maven
 # On windows mvn spawn a process while mvn.cmd is a blocking command
-if(UNIX)
-  find_program(MAVEN_EXECUTABLE mvn)
+message(STATUS "Getting Maven: ...")
+include(maven)
+message(STATUS "Getting Maven: ...DONE")
+
+if(NOT Maven_FOUND)
+  message(FATAL_ERROR "Failed to fetch maven.")
 else()
-  find_program(MAVEN_EXECUTABLE mvn.cmd)
-endif()
-if(NOT MAVEN_EXECUTABLE)
-  message(FATAL_ERROR "Check for maven Program: not found")
-else()
-  message(STATUS "Found Maven: ${MAVEN_EXECUTABLE}")
+  message(STATUS "Found Maven: ${Maven_EXECUTABLE}")
 endif()
 
 # Needed by java/CMakeLists.txt
@@ -45,13 +44,16 @@ elseif(WIN32)
 else()
   message(FATAL_ERROR "Unsupported system !")
 endif()
+
 set(JAVA_NATIVE_PROJECT ${JAVA_ARTIFACT}-${NATIVE_IDENTIFIER})
 message(STATUS "Java runtime project: ${JAVA_NATIVE_PROJECT}")
+
 set(JAVA_NATIVE_PROJECT_DIR ${PROJECT_BINARY_DIR}/java/${JAVA_NATIVE_PROJECT})
 message(STATUS "Java runtime project build path: ${JAVA_NATIVE_PROJECT_DIR}")
 
 set(JAVA_PROJECT ${JAVA_ARTIFACT}-java)
 message(STATUS "Java project: ${JAVA_PROJECT}")
+
 set(JAVA_PROJECT_DIR ${PROJECT_BINARY_DIR}/java/${JAVA_PROJECT})
 message(STATUS "Java project build path: ${JAVA_PROJECT_DIR}")
 
@@ -100,9 +102,9 @@ add_custom_command(
     $<$<NOT:$<PLATFORM_ID:Windows>>:$<TARGET_SONAME_FILE:Bar>>
     $<$<NOT:$<PLATFORM_ID:Windows>>:$<TARGET_SONAME_FILE:FooBar>>
     ${JAVA_RESSOURCES_PATH}/${JAVA_NATIVE_PROJECT}/
-  COMMAND ${MAVEN_EXECUTABLE} compile -B
-  COMMAND ${MAVEN_EXECUTABLE} package -B $<$<BOOL:${BUILD_FAT_JAR}>:-Dfatjar=true>
-  COMMAND ${MAVEN_EXECUTABLE} install -B $<$<BOOL:${SKIP_GPG}>:-Dgpg.skip=true>
+  COMMAND ${Maven_EXECUTABLE} compile -B
+  COMMAND ${Maven_EXECUTABLE} package -B $<$<BOOL:${BUILD_FAT_JAR}>:-Dfatjar=true>
+  COMMAND ${Maven_EXECUTABLE} install -B $<$<BOOL:${SKIP_GPG}>:-Dgpg.skip=true>
   COMMAND ${CMAKE_COMMAND} -E touch ${JAVA_NATIVE_PROJECT_DIR}/timestamp
   DEPENDS
     ${JAVA_NATIVE_PROJECT_DIR}/pom.xml
@@ -153,9 +155,9 @@ endforeach()
 
 add_custom_command(
   OUTPUT ${JAVA_PROJECT_DIR}/timestamp
-  COMMAND ${MAVEN_EXECUTABLE} compile -B
-  COMMAND ${MAVEN_EXECUTABLE} package -B $<$<BOOL:${BUILD_FAT_JAR}>:-Dfatjar=true>
-  COMMAND ${MAVEN_EXECUTABLE} install -B $<$<BOOL:${SKIP_GPG}>:-Dgpg.skip=true>
+  COMMAND ${Maven_EXECUTABLE} compile -B
+  COMMAND ${Maven_EXECUTABLE} package -B $<$<BOOL:${BUILD_FAT_JAR}>:-Dfatjar=true>
+  COMMAND ${Maven_EXECUTABLE} install -B $<$<BOOL:${SKIP_GPG}>:-Dgpg.skip=true>
   COMMAND ${CMAKE_COMMAND} -E touch ${JAVA_PROJECT_DIR}/timestamp
   DEPENDS
     ${JAVA_PROJECT_DIR}/pom.xml
@@ -208,7 +210,7 @@ function(add_java_test FILE_NAME)
 
   add_custom_command(
     OUTPUT ${JAVA_TEST_DIR}/timestamp
-    COMMAND ${MAVEN_EXECUTABLE} compile -B
+    COMMAND ${Maven_EXECUTABLE} compile -B
     COMMAND ${CMAKE_COMMAND} -E touch ${JAVA_TEST_DIR}/timestamp
     DEPENDS
       ${JAVA_TEST_DIR}/pom.xml
@@ -227,7 +229,7 @@ function(add_java_test FILE_NAME)
   if(BUILD_TESTING)
     add_test(
       NAME java_${COMPONENT_NAME}_${TEST_NAME}
-      COMMAND ${MAVEN_EXECUTABLE} test
+      COMMAND ${Maven_EXECUTABLE} test
       WORKING_DIRECTORY ${JAVA_TEST_DIR})
   endif()
   message(STATUS "Configuring test ${FILE_NAME}: ...DONE")
@@ -272,7 +274,7 @@ function(add_java_example FILE_NAME)
 
   add_custom_command(
     OUTPUT ${JAVA_EXAMPLE_DIR}/timestamp
-    COMMAND ${MAVEN_EXECUTABLE} compile -B
+    COMMAND ${Maven_EXECUTABLE} compile -B
     COMMAND ${CMAKE_COMMAND} -E touch ${JAVA_EXAMPLE_DIR}/timestamp
     DEPENDS
       ${JAVA_EXAMPLE_DIR}/pom.xml
@@ -291,7 +293,7 @@ function(add_java_example FILE_NAME)
   if(BUILD_TESTING)
     add_test(
       NAME java_${COMPONENT_NAME}_${EXAMPLE_NAME}
-      COMMAND ${MAVEN_EXECUTABLE} exec:java
+      COMMAND ${Maven_EXECUTABLE} exec:java
       WORKING_DIRECTORY ${JAVA_EXAMPLE_DIR})
   endif()
   message(STATUS "Configuring example ${FILE_NAME}: ...DONE")

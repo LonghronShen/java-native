@@ -15,3 +15,5 @@ cache/
 compile_commands.json
 *.swp
 *.user
+
+.vscode/

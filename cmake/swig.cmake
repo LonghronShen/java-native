@@ -1,21 +1,39 @@
 message(STATUS "Getting SWIG: ...")
 
-# Download and unpack swig at configure time
-configure_file(${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt.swig swig-download/CMakeLists.txt)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-  RESULT_VARIABLE result
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/swig-download )
-if(result)
-  message(FATAL_ERROR "CMake step for swig failed: ${result}")
-endif()
-execute_process(COMMAND ${CMAKE_COMMAND} --build .
-  RESULT_VARIABLE result
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/swig-download )
-if(result)
-  message(FATAL_ERROR "Build step for swig failed: ${result}")
+# swig
+FetchContent_Declare(swig
+  GIT_REPOSITORY https://github.com/swig/swig.git
+  GIT_TAG master)
+
+FetchContent_GetProperties(swig)
+if(NOT swig_POPULATED)
+  FetchContent_Populate(swig)
+
+  # Define SWIG_DIR (used as "hint" by FindSWIG)
+  set(SWIG_DIR ${swig_SOURCE_DIR}/Lib)
+  set(SWIG_EXECUTABLE ${swig_BINARY_DIR}/bin/swig.exe)
+
+  if(NOT ((EXISTS "${SWIG_EXECUTABLE}") AND (EXISTS "${SWIG_DIR}")))
+    include(WinFlexBison)
+
+    execute_process(COMMAND ${CMAKE_COMMAND}
+      -S ${swig_SOURCE_DIR}
+      -B ${swig_BINARY_DIR}
+      -G ${CMAKE_GENERATOR}
+      -D CMAKE_BUILD_TYPE=Debug
+      -D CMAKE_RUNTIME_OUTPUT_DIRECTORY=${swig_BINARY_DIR}/bin
+      -D CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG=${swig_BINARY_DIR}/bin
+      -D CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=${swig_BINARY_DIR}/bin
+      -D WITH_PCRE=OFF
+      -D BISON_EXECUTABLE=${BISON_EXECUTABLE}
+    )
+
+    execute_process(COMMAND ${CMAKE_COMMAND}
+      --build ${swig_BINARY_DIR}
+    )
+  endif()
 endif()
 
-# Define SWIG_EXECUTABLE (used as "hint" by FindSWIG)
-set(SWIG_EXECUTABLE ${CMAKE_BINARY_DIR}/swig/swig.exe)
 
 message(STATUS "Getting SWIG: ...DONE")
+message(STATUS "Using SWIG: ${SWIG_EXECUTABLE}")
