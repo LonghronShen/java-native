@@ -10,7 +10,7 @@ if(NOT swig_POPULATED)
   FetchContent_Populate(swig)
 
   # Define SWIG_DIR (used as "hint" by FindSWIG)
-  set(SWIG_DIR ${swig_SOURCE_DIR}/Lib)
+  set(SWIG_DIR ${swig_SOURCE_DIR}/Lib/)
   set(SWIG_EXECUTABLE ${swig_BINARY_DIR}/bin/swig.exe)
 
   if(NOT ((EXISTS "${SWIG_EXECUTABLE}") AND (EXISTS "${SWIG_DIR}")))
