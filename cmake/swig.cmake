@@ -9,8 +9,16 @@ FetchContent_GetProperties(swig)
 if(NOT swig_POPULATED)
   FetchContent_Populate(swig)
 
+  file(STRINGS "${swig_SOURCE_DIR}/configure.ac" line LIMIT_COUNT 1 REGEX "AC_INIT\\(.*\\)" )
+  if(line MATCHES "AC_INIT\\(\\[(.*)\\],[ \t]*\\[(.*)\\],[ \t]*\\[(.*)\\]\\)" )
+    set(SWIG_VERSION ${CMAKE_MATCH_2})
+    set(PACKAGE_BUGREPORT ${CMAKE_MATCH_3})
+  else()
+    message(SEND_ERROR "Could not parse version from configure.ac")
+  endif()
+
   # Define SWIG_DIR (used as "hint" by FindSWIG)
-  set(SWIG_DIR ${swig_SOURCE_DIR}/Lib/)
+  set(SWIG_DIR ${CMAKE_BINARY_DIR}/external/swig/share/swig/${SWIG_VERSION})
   set(SWIG_EXECUTABLE ${swig_BINARY_DIR}/bin/swig.exe)
 
   if(NOT ((EXISTS "${SWIG_EXECUTABLE}") AND (EXISTS "${SWIG_DIR}")))
@@ -30,6 +38,10 @@ if(NOT swig_POPULATED)
 
     execute_process(COMMAND ${CMAKE_COMMAND}
       --build ${swig_BINARY_DIR}
+    )
+
+    execute_process(COMMAND ${CMAKE_COMMAND}
+      --install ${swig_BINARY_DIR} --prefix ${CMAKE_BINARY_DIR}/external/swig
     )
   endif()
 endif()
